@@ -9,12 +9,19 @@ from google.oauth2.service_account import Credentials
 
 
 # -------- GLOBAL KEYWORDS (Scope C: Tech + Design) --------
-KEYWORDS = [
+TECH_KEYWORDS = [
     "ux", "ui", "design", "frontend", "ai",
-    "machine learning", "product", "tech",
-    "developer", "innovation", "startup"
+    "machine learning", "product", "developer",
+    "engineering", "software", "tech"
 ]
 
+CONFERENCE_KEYWORDS = [
+    "conference", "summit", "meetup",
+    "expo", "forum", "workshop",
+    "event", "symposium"
+]   
+
+KEYWORDS = TECH_KEYWORDS + CONFERENCE_KEYWORDS
 
 # -------- FETCH EVENTS FROM RSS --------
 def fetch_from_rss():
@@ -23,11 +30,14 @@ def fetch_from_rss():
 
     events = []
 
-    for entry in feed.entries[:20]:
+    for entry in feed.entries[:30]:
         title_lower = entry.title.lower()
 
-        # Keyword filtering
-        if not any(keyword in title_lower for keyword in KEYWORDS):
+        has_tech = any(word in title_lower for word in TECH_KEYWORDS)
+        has_conf = any(word in title_lower for word in CONFERENCE_KEYWORDS)
+
+        # Must satisfy BOTH
+        if not (has_tech and has_conf):
             continue
 
         events.append({
@@ -41,7 +51,6 @@ def fetch_from_rss():
         })
 
     return events
-
 
 # -------- MASTER EVENT COLLECTOR --------
 def get_events():
