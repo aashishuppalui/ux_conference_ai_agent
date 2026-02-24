@@ -51,26 +51,35 @@ def fetch_from_google_news():
 
     for query in SEARCH_QUERIES:
         rss_url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}"
-
         feed = feedparser.parse(rss_url)
 
-        for entry in feed.entries[:15]:
-            title_lower = entry.title.lower()
-            link = entry.link.lower()
+        for entry in feed.entries[:20]:
+            title = entry.title
+            title_lower = title.lower()
 
-            # Domain filter
-            if not any(domain in link for domain in ALLOWED_DOMAINS):
-                continue
+            score = 0
 
-            # Keyword validation
-            has_tech = any(word in title_lower for word in TECH_KEYWORDS)
-            has_conf = any(word in title_lower for word in CONF_KEYWORDS)
+            # Positive signals
+            if "conference" in title_lower:
+                score += 2
+            if "summit" in title_lower:
+                score += 2
+            if "2026" in title_lower or "2025" in title_lower:
+                score += 2
+            if "ux" in title_lower or "user experience" in title_lower:
+                score += 2
 
-            if not (has_tech and has_conf):
+            # Negative signals
+            if "blog" in title_lower:
+                score -= 2
+            if "news" in title_lower:
+                score -= 1
+
+            if score < 4:
                 continue
 
             events.append({
-                "name": entry.title,
+                "name": title,
                 "location": "Unknown",
                 "date": "Unknown",
                 "online": "Unknown",
