@@ -3,7 +3,6 @@ import json
 import sys
 import argparse
 import gspread
-import feedparser
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -30,9 +29,9 @@ CONF_KEYWORDS = [
 ]
 
 
-# -------- FETCH FROM GOOGLE NEWS RSS --------
-def fetch_from_eventbrite():
-    url = "https://www.eventbrite.com/d/online/ux-conference/"
+# -------- FETCH FROM UX Conference --------
+def fetch_from_uxconferences():
+    url = "https://uxconferences.com/"
 
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -41,38 +40,32 @@ def fetch_from_eventbrite():
     response = requests.get(url, headers=headers, timeout=10)
 
     if response.status_code != 200:
-        print("Eventbrite fetch failed")
+        print("Failed to fetch UX Conferences")
         return []
 
     soup = BeautifulSoup(response.text, "html.parser")
 
     events = []
 
-    cards = soup.select("div.eds-event-card-content__content")[:20]
+    cards = soup.select("div.conference")  # site uses simple class structure
 
     for card in cards:
-        title_tag = card.select_one("div.eds-event-card-content__primary-content")
-        link_tag = card.find_parent("a")
+        title_tag = card.select_one("h3")
+        date_tag = card.select_one(".date")
+        location_tag = card.select_one(".location")
+        link_tag = card.select_one("a")
 
         if not title_tag or not link_tag:
             continue
 
-        title = title_tag.text.strip()
-        link = link_tag["href"]
-
-        title_lower = title.lower()
-
-        if "ux" not in title_lower and "user experience" not in title_lower:
-            continue
-
         events.append({
-            "name": title,
-            "location": "Unknown",
-            "date": "Unknown",
+            "name": title_tag.text.strip(),
+            "location": location_tag.text.strip() if location_tag else "Unknown",
+            "date": date_tag.text.strip() if date_tag else "Unknown",
             "online": "Unknown",
             "price": "Unknown",
             "free": "Unknown",
-            "url": link,
+            "url": link_tag["href"],
         })
 
     return events
@@ -81,8 +74,8 @@ def fetch_from_eventbrite():
 def get_events():
     events = []
 
-    eb_events = fetch_from_eventbrite()
-    events.extend(eb_events)
+    ux_events = fetch_from_uxconferences()
+    events.extend(ux_events)
 
     return events
 
