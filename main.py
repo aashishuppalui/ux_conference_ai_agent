@@ -29,14 +29,16 @@ def fetch_from_rss():
 
     events = []
 
-    for entry in feed.entries[:30]:
-        title_lower = entry.title.lower()
+    for entry in feed.entries[:50]:
+        title = entry.title.lower()
 
-        has_tech = any(word in title_lower for word in TECH_KEYWORDS)
-        has_conf = any(word in title_lower for word in CONFERENCE_KEYWORDS)
+        if "conference" not in title and "summit" not in title:
+            continue
 
-        # Must satisfy BOTH
-        if not (has_tech and has_conf):
+        if not any(word in title for word in [
+            "ux", "ui", "design", "ai",
+            "developer", "tech", "product"
+        ]):
             continue
 
         events.append({
