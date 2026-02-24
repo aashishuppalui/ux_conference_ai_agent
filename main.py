@@ -58,8 +58,19 @@ def main(dry_run: bool = False) -> int:
     client = gspread.authorize(creds)
     sheet = client.open("UX_UI_Conferences").sheet1
 
-    # -------- APPEND EVENTS --------
+       # -------- DUPLICATE CHECK --------
+    existing_records = sheet.get_all_records()
+
+    # Create a set of existing URLs (fast lookup)
+    existing_urls = {row["URL"] for row in existing_records if "URL" in row}
+
+    new_events_added = 0
+
     for event in events:
+        if event["url"] in existing_urls:
+            print(f"Skipping duplicate event: {event['name']}")
+            continue
+
         sheet.append_row([
             event["name"],
             event["location"],
@@ -71,7 +82,10 @@ def main(dry_run: bool = False) -> int:
             datetime.today().strftime("%Y-%m-%d"),
         ])
 
-    print("Sheet updated successfully!")
+        new_events_added += 1
+        print(f"Added: {event['name']}")
+
+    print(f"Total new events added: {new_events_added}")
     return 0
 
 
