@@ -4,6 +4,8 @@ import sys
 import argparse
 import gspread
 import feedparser
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 
@@ -29,37 +31,60 @@ CONF_KEYWORDS = [
 
 
 # -------- FETCH FROM GOOGLE NEWS RSS --------
-def fetch_from_google_news():
+def fetch_from_eventbrite():
+    url = "https://www.eventbrite.com/d/online/ux-conference/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+
+    if response.status_code != 200:
+        print("Eventbrite fetch failed")
+        return []
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
     events = []
 
-    for query in SEARCH_QUERIES:
-        rss_url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}"
-        feed = feedparser.parse(rss_url)
+    cards = soup.select("div.eds-event-card-content__content")[:20]
 
-        for entry in feed.entries[:10]:
-            title_lower = entry.title.lower()
+    for card in cards:
+        title_tag = card.select_one("div.eds-event-card-content__primary-content")
+        link_tag = card.find_parent("a")
 
-            has_tech = any(word in title_lower for word in TECH_KEYWORDS)
-            has_conf = any(word in title_lower for word in CONF_KEYWORDS)
+        if not title_tag or not link_tag:
+            continue
 
-            if not (has_tech and has_conf):
-                continue
+        title = title_tag.text.strip()
+        link = link_tag["href"]
 
-            events.append({
-                "name": entry.title,
-                "location": "Unknown",
-                "date": "Unknown",
-                "online": "Unknown",
-                "price": "Unknown",
-                "free": "Unknown",
-                "url": entry.link,
-            })
+        title_lower = title.lower()
+
+        if "ux" not in title_lower and "user experience" not in title_lower:
+            continue
+
+        events.append({
+            "name": title,
+            "location": "Unknown",
+            "date": "Unknown",
+            "online": "Unknown",
+            "price": "Unknown",
+            "free": "Unknown",
+            "url": link,
+        })
 
     return events
 
 
 def get_events():
-    return fetch_from_google_news()
+    events = []
+
+    eb_events = fetch_from_eventbrite()
+    events.extend(eb_events)
+
+    return events
 
 
 def main(dry_run: bool = False) -> int:
