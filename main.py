@@ -21,7 +21,6 @@ CONFERENCE_KEYWORDS = [
     "event", "symposium"
 ]   
 
-KEYWORDS = TECH_KEYWORDS + CONFERENCE_KEYWORDS
 
 # -------- FETCH EVENTS FROM RSS --------
 def fetch_from_rss():
