@@ -8,81 +8,69 @@ from datetime import datetime
 from google.oauth2.service_account import Credentials
 
 
-# -------- GLOBAL KEYWORDS (Scope C: Tech + Design) --------
-TECH_KEYWORDS = [
-    "ux", "ui", "design", "frontend", "ai",
-    "machine learning", "product", "developer",
-    "engineering", "software", "tech"
+# -------- SEARCH QUERIES --------
+SEARCH_QUERIES = [
+    "AI conference 2026",
+    "Tech summit 2026",
+    "UX conference 2026",
+    "Developer conference 2026",
+    "Product design summit 2026"
 ]
 
-CONFERENCE_KEYWORDS = [
+TECH_KEYWORDS = [
+    "ux", "ui", "design", "ai", "developer",
+    "tech", "product", "software", "engineering"
+]
+
+CONF_KEYWORDS = [
     "conference", "summit", "meetup",
-    "expo", "forum", "workshop",
-    "event", "symposium"
-]   
+    "expo", "forum", "symposium", "workshop"
+]
 
 
-# -------- FETCH EVENTS FROM RSS --------
-def fetch_from_rss():
-    rss_url = "https://dev.to/feed/tag/events"
-    feed = feedparser.parse(rss_url)
-
+# -------- FETCH FROM GOOGLE NEWS RSS --------
+def fetch_from_google_news():
     events = []
 
-    for entry in feed.entries[:50]:
-        title = entry.title.lower()
+    for query in SEARCH_QUERIES:
+        rss_url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}"
+        feed = feedparser.parse(rss_url)
 
-        if "conference" not in title and "summit" not in title:
-            continue
+        for entry in feed.entries[:10]:
+            title_lower = entry.title.lower()
 
-        if not any(word in title for word in [
-            "ux", "ui", "design", "ai",
-            "developer", "tech", "product"
-        ]):
-            continue
+            has_tech = any(word in title_lower for word in TECH_KEYWORDS)
+            has_conf = any(word in title_lower for word in CONF_KEYWORDS)
 
-        events.append({
-            "name": entry.title,
-            "location": "Online",
-            "date": "Unknown",
-            "online": "Yes",
-            "price": "Unknown",
-            "free": "Unknown",
-            "url": entry.link,
-        })
+            if not (has_tech and has_conf):
+                continue
+
+            events.append({
+                "name": entry.title,
+                "location": "Unknown",
+                "date": "Unknown",
+                "online": "Unknown",
+                "price": "Unknown",
+                "free": "Unknown",
+                "url": entry.link,
+            })
 
     return events
 
-# -------- MASTER EVENT COLLECTOR --------
+
 def get_events():
-    events = []
-
-    rss_events = fetch_from_rss()
-    events.extend(rss_events)
-
-    return events
+    return fetch_from_google_news()
 
 
 def main(dry_run: bool = False) -> int:
     events = get_events()
 
     if dry_run:
-        print("Dry run: would append the following rows to the sheet:")
-        for event in events:
-            row = [
-                event["name"],
-                event["location"],
-                event["date"],
-                event["online"],
-                event["price"],
-                event["free"],
-                event["url"],
-                datetime.today().strftime("%Y-%m-%d"),
-            ]
-            print(row)
+        print("Dry run preview:")
+        for e in events:
+            print(e)
         return 0
 
-    # -------- AUTH USING GITHUB SECRET --------
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
@@ -100,7 +88,6 @@ def main(dry_run: bool = False) -> int:
     client = gspread.authorize(creds)
     sheet = client.open("UX_UI_Conferences").sheet1
 
-    # -------- DUPLICATE CHECK --------
     existing_records = sheet.get_all_records()
     existing_urls = {row["URL"] for row in existing_records if "URL" in row}
 
@@ -108,7 +95,6 @@ def main(dry_run: bool = False) -> int:
 
     for event in events:
         if event["url"] in existing_urls:
-            print(f"Skipping duplicate event: {event['name']}")
             continue
 
         sheet.append_row([
