@@ -3,82 +3,92 @@ import json
 import sys
 import argparse
 import gspread
-import requests
-from bs4 import BeautifulSoup
+import feedparser
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 
 
-# -------- SEARCH QUERIES --------
+# ---------------- SEARCH CONFIG ---------------- #
+
 SEARCH_QUERIES = [
-    "AI conference 2026",
-    "Tech summit 2026",
-    "UX conference 2026",
-    "Developer conference 2026",
-    "Product design summit 2026"
+    '"UX Conference 2026"',
+    '"User Experience Conference 2026"',
+    '"Interaction Design Conference 2026"',
+    '"Design Systems Conference 2026"',
+    '"UX Summit 2026"',
+    '"UX Conference 2025"',
+]
+
+ALLOWED_DOMAINS = [
+    "eventbrite.com",
+    "meetup.com",
+    "interaction-design.org",
+    "smashingmagazine.com",
+    "nngroup.com",
+    "ixda.org",
 ]
 
 TECH_KEYWORDS = [
-    "ux", "ui", "design", "ai", "developer",
-    "tech", "product", "software", "engineering"
+    "ux",
+    "user experience",
+    "interaction design",
+    "design systems",
 ]
 
 CONF_KEYWORDS = [
-    "conference", "summit", "meetup",
-    "expo", "forum", "symposium", "workshop"
+    "conference",
+    "summit",
+    "symposium",
+    "forum",
+    "workshop",
 ]
 
 
-# -------- FETCH FROM UX Conference --------
-def fetch_from_uxconferences():
-    url = "https://uxconferences.com/"
+# ---------------- GOOGLE RSS FETCH ---------------- #
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    response = requests.get(url, headers=headers, timeout=10)
-
-    if response.status_code != 200:
-        print("Failed to fetch UX Conferences")
-        return []
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
+def fetch_from_google_news():
     events = []
 
-    cards = soup.select("div.conference")  # site uses simple class structure
+    for query in SEARCH_QUERIES:
+        rss_url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}"
 
-    for card in cards:
-        title_tag = card.select_one("h3")
-        date_tag = card.select_one(".date")
-        location_tag = card.select_one(".location")
-        link_tag = card.select_one("a")
+        feed = feedparser.parse(rss_url)
 
-        if not title_tag or not link_tag:
-            continue
+        for entry in feed.entries[:15]:
+            title_lower = entry.title.lower()
+            link = entry.link.lower()
 
-        events.append({
-            "name": title_tag.text.strip(),
-            "location": location_tag.text.strip() if location_tag else "Unknown",
-            "date": date_tag.text.strip() if date_tag else "Unknown",
-            "online": "Unknown",
-            "price": "Unknown",
-            "free": "Unknown",
-            "url": link_tag["href"],
-        })
+            # Domain filter
+            if not any(domain in link for domain in ALLOWED_DOMAINS):
+                continue
+
+            # Keyword validation
+            has_tech = any(word in title_lower for word in TECH_KEYWORDS)
+            has_conf = any(word in title_lower for word in CONF_KEYWORDS)
+
+            if not (has_tech and has_conf):
+                continue
+
+            events.append({
+                "name": entry.title,
+                "location": "Unknown",
+                "date": "Unknown",
+                "online": "Unknown",
+                "price": "Unknown",
+                "free": "Unknown",
+                "url": entry.link,
+            })
 
     return events
 
+
+# ---------------- MASTER EVENT COLLECTOR ---------------- #
 
 def get_events():
-    events = []
+    return fetch_from_google_news()
 
-    ux_events = fetch_from_uxconferences()
-    events.extend(ux_events)
 
-    return events
-
+# ---------------- MAIN ---------------- #
 
 def main(dry_run: bool = False) -> int:
     events = get_events()
