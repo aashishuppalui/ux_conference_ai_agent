@@ -90,7 +90,6 @@ def fetch_from_google_news():
 
     return events
 
-
 # ---------------- MASTER EVENT COLLECTOR ---------------- #
 
 def get_events():
