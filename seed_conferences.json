@@ -1,0 +1,32 @@
+[
+  {
+    "name": "UXDX",
+    "website": "https://uxdx.com/",
+    "country": "Global"
+  },
+  {
+    "name": "UX London",
+    "website": "https://uxlondon.com/",
+    "country": "UK"
+  },
+  {
+    "name": "Interaction (IxDA)",
+    "website": "https://interaction.ixda.org/",
+    "country": "Global"
+  },
+  {
+    "name": "UX Nordic",
+    "website": "https://uxnordic.com/",
+    "country": "Denmark"
+  },
+  {
+    "name": "SmashingConf",
+    "website": "https://smashingconf.com/",
+    "country": "Global"
+  },
+  {
+    "name": "Nielsen Norman Group UX Conference",
+    "website": "https://www.nngroup.com/training/",
+    "country": "Global"
+  }
+]
