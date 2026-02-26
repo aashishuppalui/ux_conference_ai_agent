@@ -2,107 +2,78 @@ import os
 import json
 import sys
 import argparse
+import requests
 import gspread
-import feedparser
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 
 
-# ---------------- SEARCH CONFIG ---------------- #
-
-SEARCH_QUERIES = [
-    '"UX Conference 2026"',
-    '"User Experience Conference 2026"',
-    '"Interaction Design Conference 2026"',
-    '"Design Systems Conference 2026"',
-    '"UX Summit 2026"',
-    '"UX Conference 2025"',
-]
-
-ALLOWED_DOMAINS = [
-    "eventbrite.com",
-    "meetup.com",
-    "interaction-design.org",
-    "smashingmagazine.com",
-    "nngroup.com",
-    "ixda.org",
-]
-
-TECH_KEYWORDS = [
-    "ux",
-    "user experience",
-    "interaction design",
-    "design systems",
-]
-
-CONF_KEYWORDS = [
-    "conference",
-    "summit",
-    "symposium",
-    "forum",
-    "workshop",
-]
+CURRENT_YEARS = ["2026", "2025"]
 
 
-# ---------------- GOOGLE RSS FETCH ---------------- #
+# -------- LOAD SEED LIST -------- #
 
-def fetch_from_google_news():
-    events = []
+def load_seed_conferences():
+    with open("seed_conferences.json", "r") as f:
+        return json.load(f)
 
-    for query in SEARCH_QUERIES:
-        rss_url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}"
-        feed = feedparser.parse(rss_url)
 
-        for entry in feed.entries[:20]:
-            title = entry.title
-            title_lower = title.lower()
+# -------- CHECK WEBSITE FOR CURRENT YEAR -------- #
 
-            score = 0
+def detect_current_edition(conference):
+    try:
+        response = requests.get(
+            conference["website"],
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10,
+        )
+    except Exception:
+        return None
 
-            # Positive signals
-            if "conference" in title_lower:
-                score += 2
-            if "summit" in title_lower:
-                score += 2
-            if "2026" in title_lower or "2025" in title_lower:
-                score += 2
-            if "ux" in title_lower or "user experience" in title_lower:
-                score += 2
+    if response.status_code != 200:
+        return None
 
-            # Negative signals
-            if "blog" in title_lower:
-                score -= 2
-            if "news" in title_lower:
-                score -= 1
+    page_text = response.text.lower()
 
-            if score < 4:
-                continue
+    for year in CURRENT_YEARS:
+        if year in page_text:
+            return year
 
-            events.append({
-                "name": title,
-                "location": "Unknown",
-                "date": "Unknown",
-                "online": "Unknown",
-                "price": "Unknown",
-                "free": "Unknown",
-                "url": entry.link,
-            })
+    return None
 
-    return events
 
-# ---------------- MASTER EVENT COLLECTOR ---------------- #
+# -------- FETCH CONFIRMED EVENTS -------- #
 
 def get_events():
-    return fetch_from_google_news()
+    seed_list = load_seed_conferences()
+    confirmed_events = []
+
+    for conf in seed_list:
+        detected_year = detect_current_edition(conf)
+
+        if not detected_year:
+            continue
+
+        confirmed_events.append({
+            "name": f"{conf['name']} {detected_year}",
+            "location": conf.get("country", "Unknown"),
+            "date": detected_year,
+            "online": "Unknown",
+            "price": "Unknown",
+            "free": "Unknown",
+            "url": conf["website"],
+        })
+
+    return confirmed_events
 
 
-# ---------------- MAIN ---------------- #
+# -------- MAIN -------- #
 
 def main(dry_run: bool = False) -> int:
     events = get_events()
 
     if dry_run:
-        print("Dry run preview:")
+        print("Detected conferences:")
         for e in events:
             print(e)
         return 0
