@@ -25,13 +25,14 @@ def get_recent_events(sheet):
 
 # ---------- GEMINI ----------
 def generate_with_gemini(prompt):
-    import google.generativeai as genai
+    from google import genai
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")
-
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
+    )
 
     return response.text
 
