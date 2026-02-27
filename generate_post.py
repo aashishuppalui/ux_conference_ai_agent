@@ -29,7 +29,7 @@ def generate_with_gemini(prompt):
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
     response = model.generate_content(prompt)
 
