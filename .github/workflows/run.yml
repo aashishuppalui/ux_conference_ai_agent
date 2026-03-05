@@ -32,3 +32,9 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python generate_post.py
+
+      - name: Upload LinkedIn Post
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkedin-post
+          path: linkedin_post.txt
