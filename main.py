@@ -15,7 +15,7 @@ CURRENT_YEARS = ["2026", "2025"]
 # -------- LOAD SEED LIST -------- #
 
 def load_seed_conferences():
-    with open("seed_conferences.json", "r") as f:
+    with open("data/seed_conferences.json", "r") as f:
         return json.load(f)
 
 
