@@ -6,6 +6,7 @@ import requests
 import gspread
 from datetime import datetime
 from google.oauth2.service_account import Credentials
+from discovery.eventbrite import discover_eventbrite_events
 
 
 CURRENT_YEARS = ["2026", "2025"]
@@ -46,15 +47,16 @@ def detect_current_edition(conference):
 
 def get_events():
     seed_list = load_seed_conferences()
-    confirmed_events = []
+    all_events = []
 
+# -------- Seed Conferences -------- #
     for conf in seed_list:
         detected_year = detect_current_edition(conf)
 
         if not detected_year:
             continue
 
-        confirmed_events.append({
+        all_events.append({
             "name": f"{conf['name']} {detected_year}",
             "location": conf.get("country", "Unknown"),
             "date": detected_year,
@@ -64,7 +66,17 @@ def get_events():
             "url": conf["website"],
         })
 
-    return confirmed_events
+     # -------- Eventbrite Discovery -------- #
+    try:
+        eventbrite_events = discover_eventbrite_events()
+
+        for event in eventbrite_events:
+            all_events.append(event)
+
+    except Exception as e:
+        print("Eventbrite discovery failed:", e)
+
+    return all_events
 
 
 # -------- MAIN -------- #

@@ -2,4 +2,5 @@ gspread
 google-auth
 requests
 openai
+beautifulsoup4
 # google-genai
