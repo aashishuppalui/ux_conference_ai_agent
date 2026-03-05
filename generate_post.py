@@ -5,7 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # -------- LLM SWITCH --------
-LLM_PROVIDER = "gemini"  # change to "openai" anytime
+LLM_PROVIDER = "openai"  # change to "openai" anytime
 
 LOOKBACK_DAYS = 14
 

@@ -2,4 +2,4 @@ gspread
 google-auth
 requests
 openai
-google-genai
+# google-genai
