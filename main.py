@@ -10,6 +10,7 @@ from google.oauth2.service_account import Credentials
 from utils.event_filter import is_valid_event
 from discovery.rss_search import discover_rss_events
 from verification.verify_event import verify_event
+from verification.ai_verify_event import ai_verify_event
 
 
 CURRENT_YEARS = ["2026", "2025"]
@@ -86,7 +87,7 @@ def get_events():
                 continue
             seen_titles.add(title_key)
             
-            if not verify_event(event["name"]):
+            if not ai_verify_event(event["name"]):
                 continue
 
             all_events.append(event)
