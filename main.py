@@ -6,8 +6,9 @@ import requests
 import gspread
 from datetime import datetime
 from google.oauth2.service_account import Credentials
-from discovery.eventbrite import discover_eventbrite_events
+# from discovery.eventbrite import discover_eventbrite_events
 from utils.event_filter import is_valid_event
+from discovery.rss_search import discover_rss_events
 
 
 CURRENT_YEARS = ["2026", "2025"]
@@ -71,13 +72,13 @@ def get_events():
     seen_names = set()
 
     try:
-        eventbrite_events = discover_eventbrite_events()
+        rss_events = discover_rss_events()
 
-        print(f"Eventbrite discovered: {len(eventbrite_events)} events")
-        for e in eventbrite_events[:10]:
+        print(f"RSS discovered: {len(rss_events)} events")
+        for e in rss_events[:10]:
             print("DISCOVERED:", e["name"])
 
-        for event in eventbrite_events:
+        for event in rss_events:
             name_key = event["name"].lower()
 
             if name_key in seen_names:
