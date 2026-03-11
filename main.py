@@ -9,6 +9,7 @@ from google.oauth2.service_account import Credentials
 # from discovery.eventbrite import discover_eventbrite_events
 from utils.event_filter import is_valid_event
 from discovery.rss_search import discover_rss_events
+from verification.verify_event import verify_event
 
 
 CURRENT_YEARS = ["2026", "2025"]
@@ -68,8 +69,8 @@ def get_events():
             "url": conf["website"],
         })
 
-     # -------- Eventbrite Discovery -------- #
-    seen_names = set()
+     # -------- RSS Discovery -------- #
+    seen_titles = set()
 
     try:
         rss_events = discover_rss_events()
@@ -79,17 +80,19 @@ def get_events():
             print("DISCOVERED:", e["name"])
 
         for event in rss_events:
-            name_key = event["name"].lower()
+            title_key = event["name"].lower()
 
-            if name_key in seen_names:
+            if title_key in seen_titles:
                 continue
-            if not is_valid_event(event["name"]):
+            seen_titles.add(title_key)
+            
+            if not verify_event(event["name"]):
                 continue
 
             all_events.append(event)
 
     except Exception as e:
-        print("Eventbrite discovery failed:", e)
+        print("RSS discovery failed:", e)
 
     return all_events
 
