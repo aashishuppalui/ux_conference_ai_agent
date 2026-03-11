@@ -73,6 +73,10 @@ def get_events():
     try:
         eventbrite_events = discover_eventbrite_events()
 
+        print(f"Eventbrite discovered: {len(eventbrite_events)} events")
+        for e in eventbrite_events[:10]:
+            print("DISCOVERED:", e["name"])
+
         for event in eventbrite_events:
             name_key = event["name"].lower()
 
