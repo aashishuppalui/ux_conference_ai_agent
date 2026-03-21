@@ -9,7 +9,6 @@ from google.oauth2.service_account import Credentials
 # from discovery.eventbrite import discover_eventbrite_events
 from utils.event_filter import is_valid_event
 from discovery.rss_search import discover_rss_events
-from verification.verify_event import verify_event
 from verification.ai_verify_event import ai_verify_event
 from extraction.extract_event_details import extract_event_details
 
@@ -90,11 +89,6 @@ def get_events():
             
             if not ai_verify_event(event["name"]):
                 continue
-
-            details = extract_event_details(event["url"])
-
-            if details:
-                print("EXTRACTED DETAILS:", details)
 
             all_events.append(event)
 
