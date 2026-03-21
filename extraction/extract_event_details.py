@@ -2,10 +2,14 @@ import os
 import requests
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
 
 def extract_event_details(url):
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("OPENAI_API_KEY environment variable is not set. Skipping event extraction.")
+        return None
+
+    client = OpenAI(api_key=api_key)
 
     try:
         response = requests.get(url, timeout=10)

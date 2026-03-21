@@ -1,10 +1,14 @@
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
 
 def ai_verify_event(title):
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("OPENAI_API_KEY environment variable is not set. Skipping AI verification.")
+        return False
+
+    client = OpenAI(api_key=api_key)
 
     prompt = f"""
 Determine if the following title refers to a real UX/design event 
