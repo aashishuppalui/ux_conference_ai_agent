@@ -3,10 +3,10 @@ import os
 import requests
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
 
 def extract_event(url, title):
+
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     try:
         response = requests.get(url, timeout=10)
@@ -52,13 +52,17 @@ Content:
 
         result = completion.choices[0].message.content.strip()
 
+        # If AI says not an event
         if "NULL" in result.upper():
             return None
 
-    try:
-        return json.loads(result)
-    except:
+        # Try parsing JSON
+        try:
+            return json.loads(result)
+        except Exception:
+            print("JSON parse failed:", result)
+            return None
+
+    except Exception as e:
+        print("Extraction failed:", e)
         return None
-    # except Exception as e:
-    #     print("Extraction failed:", e)
-    #     return None
