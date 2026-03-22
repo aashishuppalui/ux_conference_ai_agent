@@ -11,6 +11,7 @@ from utils.event_filter import is_valid_event
 from discovery.rss_search import discover_rss_events
 from verification.ai_verify_event import ai_verify_event
 from extraction.extract_event_details import extract_event_details
+from extraction.ai_extract_event import extract_event
 
 
 CURRENT_YEARS = ["2026", "2025"]
@@ -86,9 +87,17 @@ def get_events():
             if title_key in seen_titles:
                 continue
             seen_titles.add(title_key)
-            
-            if not ai_verify_event(event["name"]):
+
+            # New AI extraction step(replaces verification)
+            extracted = extract_event(event["url"], event["name"])
+
+            if not extracted:
                 continue
+
+            print("Valid event:", event["name"])
+            
+            # if not ai_verify_event(event["name"]):
+            #     continue
 
             all_events.append(event)
 
@@ -96,6 +105,7 @@ def get_events():
         print("RSS discovery failed:", e)
 
     return all_events
+
 
 
 # -------- MAIN -------- #
