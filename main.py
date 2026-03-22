@@ -145,12 +145,15 @@ def main(dry_run: bool = False) -> int:
     sheet = client.open("UX_UI_Conferences").sheet1
 
     existing_records = sheet.get_all_records()
-    existing_urls = {row["URL"] for row in existing_records if "URL" in row}
-
+    existing_keys = {
+    (row["Name"].lower(), row["Date"])
+    for row in existing_records
+    if "Name" in row and "Date" in row
+}
     new_events_added = 0
 
     for event in events:
-        if event["url"] in existing_urls:
+        if (event["name"].lower(), event["date"]) in existing_keys:
             continue
 
         sheet.append_row([
