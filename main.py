@@ -6,11 +6,7 @@ import requests
 import gspread
 from datetime import datetime
 from google.oauth2.service_account import Credentials
-# from discovery.eventbrite import discover_eventbrite_events
-from utils.event_filter import is_valid_event
 from discovery.rss_search import discover_rss_events
-from verification.ai_verify_event import ai_verify_event
-from extraction.extract_event_details import extract_event_details
 from extraction.ai_extract_event import extract_event
 
 
@@ -54,7 +50,7 @@ def get_events():
     seed_list = load_seed_conferences()
     all_events = []
 
-# -------- Seed Conferences -------- #
+    # -------- Seed Conferences -------- #
     for conf in seed_list:
         detected_year = detect_current_edition(conf)
 
@@ -71,7 +67,7 @@ def get_events():
             "url": conf["website"],
         })
 
-     # -------- RSS Discovery -------- #
+    # -------- RSS Discovery + AI Extraction -------- #
     seen_titles = set()
 
     try:
@@ -88,18 +84,30 @@ def get_events():
                 continue
             seen_titles.add(title_key)
 
-            # New AI extraction step(replaces verification)
-            extracted = extract_event(event["url"], event["name"])
+            # ---- AI extraction (verify + extract) ----
+            structured = extract_event(event["url"], event["name"])
 
-            if not extracted:
+            if not structured:
                 continue
 
-            print("Valid event:", event["name"])
-            
-            # if not ai_verify_event(event["name"]):
-            #     continue
+            # Ensure structured data is dict
+            if not isinstance(structured, dict):
+                continue
 
-            all_events.append(event)
+            print("VALID EVENT:", structured.get("name", event["name"]))
+
+            # ---- Build final event object ----
+            clean_event = {
+                "name": structured.get("name", event["name"]),
+                "location": structured.get("location", "Unknown"),
+                "date": structured.get("date", "Unknown"),
+                "online": structured.get("online", "Unknown"),
+                "price": structured.get("price", "Unknown"),
+                "free": "Unknown",
+                "url": event["url"],
+            }
+
+            all_events.append(clean_event)
 
     except Exception as e:
         print("RSS discovery failed:", e)

@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 from openai import OpenAI
@@ -22,8 +23,14 @@ You are analyzing a web page.
 
 Determine if this is a real UX/design event (conference, meetup, workshop, summit).
 
-If YES → extract details in JSON:
-name, location, date, online, price
+If YES → return JSON ONLY:
+{{
+  "name": "...",
+  "location": "...",
+  "date": "...",
+  "online": "...",
+  "price": "..."
+}}
 
 If NOT → return: NULL
 
@@ -48,8 +55,10 @@ Content:
         if "NULL" in result.upper():
             return None
 
-        return result
-
-    except Exception as e:
-        print("Extraction failed:", e)
+    try:
+        return json.loads(result)
+    except:
         return None
+    # except Exception as e:
+    #     print("Extraction failed:", e)
+    #     return None
