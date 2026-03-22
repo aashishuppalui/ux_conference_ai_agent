@@ -104,7 +104,7 @@ def get_events():
                 "online": structured.get("online", "Unknown"),
                 "price": structured.get("price", "Unknown"),
                 "free": "Unknown",
-                "url": event["url"],
+                "url": structured.get("official_url", event["url"]),
             }
 
             all_events.append(clean_event)

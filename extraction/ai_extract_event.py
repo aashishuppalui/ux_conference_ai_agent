@@ -19,18 +19,23 @@ def extract_event(url, title):
     content = response.text[:5000]
 
     prompt = f"""
-You are analyzing a web page.
+    You are analyzing a web page.
 
-Determine if this is a real UX/design event (conference, meetup, workshop, summit).
+    Determine if this is a real UX/design event.
 
-If YES → return JSON ONLY:
-{{
-  "name": "...",
-  "location": "...",
-  "date": "...",
-  "online": "...",
-  "price": "..."
-}}
+    If YES → return JSON ONLY:
+    {{
+    "name": "...",
+    "location": "...",
+    "date": "...",
+    "online": "...",
+    "price": "...",
+    "official_url": "..."
+    }}
+
+IMPORTANT:
+- official_url MUST be the actual event page (Eventbrite, Meetup, or official website)
+- NOT a news article or blog
 
 If NOT → return: NULL
 
