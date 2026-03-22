@@ -55,12 +55,28 @@ Content:
         # If AI says not an event
         if "NULL" in result.upper():
             return None
+        
+        # Clean AI output
+        cleaned = result
+
+        # Remove markdown
+        cleaned = cleaned.replace("```json", "").replace("```", "")
+
+        # Remove junk characters
+        cleaned = cleaned.replace("**", "").strip()
+
+        # Ensure JSON starts with { and ends with }
+        if not cleaned.startswith("{"):
+            cleaned = "{" + cleaned
+        if not cleaned.endswith("}"):
+            cleaned = cleaned + "}"
+
 
         # Try parsing JSON
         try:
-            return json.loads(result)
+            return json.loads(cleaned)
         except Exception:
-            print("JSON parse failed:", result)
+            print("JSON parse failed:", cleaned)
             return None
 
     except Exception as e:
